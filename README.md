@@ -32,9 +32,7 @@ library we personally had some errors due to user input. Since that is the found
 the game without it crashing we will know were successful.
 
 ## Architecture Diagram
-Upload the architecture diagram you made for your slide presentation to your repository, and include it in-line here.
-
-Create several paragraphs of narrative to explain the pieces and how they interoperate.
+<img src="https://github.com/oplS17projects/2d-Shooter/blob/master/Screen%20Shot%202017-04-02%20at%208.16.12%20PM.png" width="200" height="200">
 
 ## Schedule
 ### First Milestone (Sun Apr 9)
