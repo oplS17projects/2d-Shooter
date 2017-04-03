@@ -50,10 +50,12 @@ is correctly implemented along with interaction between enemies and players.
 
 ### Danny Nguyen @dannynguyen1
 will write the event that take in input from the user
+
 Will work on movement of the character sprire
 
 ### Chintushig Ochirsukh @luffy1727
 Will work on the incorporating sound
+
 Will work on projectile movement
 
  
