@@ -32,7 +32,7 @@ library we personally had some errors due to user input. Since that is the found
 the game without it crashing we will know were successful.
 
 ## Architecture Diagram
-<img src="https://github.com/oplS17projects/2d-Shooter/blob/master/Screen%20Shot%202017-04-02%20at%208.16.12%20PM.png" width="200" height="200">
+<img src="https://github.com/oplS17projects/2d-Shooter/blob/master/Screen%20Shot%202017-04-02%20at%208.16.12%20PM.png" width="800" height="800">
 
 ## Schedule
 ### First Milestone (Sun Apr 9)
