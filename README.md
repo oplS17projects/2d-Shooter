@@ -32,6 +32,14 @@ library we personally had some errors due to user input. Since that is the found
 the game without it crashing we will know were successful.
 
 ## Architecture Diagram
+First block is the user input where we will use 2htdp-universe library to implement
+
+Game design will also be using 2htdp-image/universe
+
+Sound will link to the Game using rsound
+
+Sprite interaction using 2htdp-universe to update the world when sprites collide
+
 <img src="https://github.com/oplS17projects/2d-Shooter/blob/master/Screen%20Shot%202017-04-02%20at%208.16.12%20PM.png" width="800" height="800">
 
 ## Schedule
