@@ -4,11 +4,18 @@
 
 (define player (bitmap "character_sprite.png"))
 
-(define (character t) ;t =WorldState
+(define background (bitmap "background.png"))
+
+(define (screen t)
+  (overlay/xy (bitmap "background.png")
+               500 500
+               (empty-scene 0 0)))
+
+(define (character t)
   (place-image player
                (car t)
                (cdr t)
-               (empty-scene 500 500)))
+               (screen 0)))
 
 (define (change w a-key)
   (cond
@@ -17,6 +24,6 @@
     [(= (string-length a-key) 1) w] 
     [else w]))
 
-(big-bang '(20 . 450) 
+(big-bang '(10 . 490) 
           (to-draw character)
           (on-key change))
