@@ -188,9 +188,30 @@
                            (player-direction (world-player world))
                            (/ (player-speed-x world) friction-x)
                            (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
-              (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))))
+              (monster-health-deletion (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world)))) (world-bullets world)) 
               (make-bullets (map bullet-map-filter (bullet-removal (bullets-list-of-bullets (world-bullets world)))))
               )
+  )
+
+(define (monster-health-deletion monsters bullets)
+  (if (null? (monsters-list-of-monsters monsters))
+      (make-monsters '())
+      (if (null? (bullets-list-of-bullets bullets))
+          monsters
+          (if (bullets-touch-monster (bullets-list-of-bullets bullets) (car (monsters-list-of-monsters monsters)))
+              (make-monsters (cons (make-monster -500 -500 'dead 'up) (monsters-list-of-monsters (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters))) bullets))))
+              (make-monsters (cons (car (monsters-list-of-monsters monsters)) (monsters-list-of-monsters (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters))) bullets)))))
+      )
+  ))
+
+(define (bullets-touch-monster bullets monster)
+  (if (null? bullets)
+      #f
+      (if (and (< (abs (- (bullet-x-coordinate (car bullets)) (monster-x-coordinate monster))) (/ (image-width monster-image) 1))
+               (< (abs (- (bullet-y-coordinate (car bullets)) (monster-y-coordinate monster))) (/ (image-height monster-image) 1)))
+          #t
+          (bullets-touch-monster (cdr bullets) monster)
+  ))
   )
 
 (define (player-health-deletion player monsters world)
@@ -217,7 +238,7 @@
 (define (bullet-map-filter bullet)
   (cond
     [(eq? (bullet-direction bullet) 'right)
-     (if (> (bullet-x-coordinate bullet) 500)
+     (if (> (bullet-x-coordinate bullet) (image-width background-image))
          (make-bullet
          (+ (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'dead 'right)
          (make-bullet
@@ -393,7 +414,7 @@
                                              (make-monster 200 300 'alive 'down)
                                              (make-monster 100 100 'alive 'up)
                                              (make-monster 900 250 'alive 'right)))
-                        (make-bullets (list (make-bullet 49 497 'alive 'right)))) ;;initial world
+                        (make-bullets '())) ;;initial world
             (to-draw the-one-for-all)
             (on-key change)
             [on-tick the-tick-handler])
