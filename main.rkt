@@ -36,7 +36,7 @@
 ;; structure for bulet
 ;; status for collision and out of bounds
 ;; need cleanup fucntion
-(define-struct bullet [x-coordinate y-coordinate status])
+(define-struct bullet [x-coordinate y-coordinate status direction])
 
 ;; if status == dead create 1 else stay
 (define-struct enemy [x-coordinate y-coordinate status])
@@ -70,8 +70,7 @@
                    (player-x-coordinate  (world-player world))
                    (player-y-coordinate (world-player world))
                    (draw-bullet world))
-      )
-  
+      ) 
   )
 
 ;; @created by : T
@@ -106,9 +105,7 @@
   )
 
 
- 
-
-
+  
 ;; @created by : T
 ;; @name : draw-bullet
 ;; @variable : world
@@ -123,14 +120,6 @@
                background-image
                )
   )
-
-;; the draw function
-
-
-;;
-
-
-
 
 ;;accessors starts here
 
@@ -185,14 +174,31 @@
                            (player-status (world-player world))
                            (player-direction (world-player world)))
               (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
-              (make-bullets (cons
-                             (make-bullet ( + (bullet-coordinate-x world) 10)
-                                          (bullet-coordinate-y world) 'alive)
-                             (bullets-list-of-bullets (world-bullets world))))
+              (make-bullets 
+               (map bullet-map-filter (bullets-list-of-bullets (world-bullets world))))
               )
-
-      
   )
+
+
+;; @created by : T
+;; @name : bullet-map-filter 
+;; @variable : bullet
+;;  ~bullet type object
+;; @returns : bullet type object
+;; @brief : new bullet type object with updated coordinates in the following direction
+
+(define (bullet-map-filter bullet)
+  (cond
+    [(eq? (bullet-direction bullet) 'right)
+         (make-bullet
+              (+ (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'right)]
+    [(eq? (bullet-direction bullet) 'left)
+         (make-bullet
+     (- (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'left)]
+    [else (make-bullet
+     (bullet-x-coordinate bullet) (bullet-y-coordinate bullet))]
+    )
+    )
 
 ;; @created by : T
 ;; @name : move-enemy
@@ -226,11 +232,7 @@
                              (player-status (world-player world))
                              'left)
                             (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
-                            (make-bullets (cons
-                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive)
-                                           (bullets-list-of-bullets (world-bullets world))
-                                           )
-                                          )
+                            (make-bullets (bullets-list-of-bullets (world-bullets world)))
                             )
                              ]
     [(key=? a-key "right") (make-world
@@ -241,12 +243,26 @@
                              (player-status (world-player world))
                              'right)
                             (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
-                            (make-bullets (cons
-                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive)
-                                           (bullets-list-of-bullets (world-bullets world))))
+                            (make-bullets 
+                                           (bullets-list-of-bullets (world-bullets world)))
                             )]
 
-    [(key=? a-key " ")  ]
+    [(key=? a-key " ")  (make-world
+                            (make-player
+                             (player-coordinate-x world)
+                             (player-coordinate-y world)
+                             (player-health (world-player world))
+                             (player-status (world-player world))
+                             (player-direction (world-player world)))
+                            (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
+                            (make-bullets (cons
+                                           (make-bullet (player-coordinate-x world) (player-coordinate-y world) 'alive
+                                                        (player-direction (world-player world)))
+                                           (bullets-list-of-bullets (world-bullets world))))
+                            )
+     
+
+     ]
     [(= (string-length a-key) 1) world] 
     [else world]))
 
@@ -254,7 +270,7 @@
   (big-bang
             (make-world (make-player 20 500 3 'alive 'right)
                         (make-enemy 1000 500 'alive)
-                        (make-bullets (list (make-bullet 49 497 'alive)))) ;;initial world
+                        (make-bullets (list (make-bullet 49 497 'alive 'right)))) ;;initial world
             (to-draw the-one-for-all)
             (on-key change)
             [on-tick the-tick-handler])
