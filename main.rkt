@@ -30,7 +30,7 @@
 ;; structure for bullets
 (define-struct bullets (list-of-bullets))
 
-(define-struct monsters (list-of-monsters))
+(define-struct monsters (list-of-monsters numdead))
 
 
 ;; status for collision and out of bounds
@@ -69,8 +69,11 @@
   (if (<= (player-health (world-player world)) 0)
       (place-image (text (format "Press [space] to restart") 20 "black") (/ (image-width image) 2) (- (/ (image-height image) 2) 70) 
       (place-image (text (format "Aw shoot. YOU DIED.") 50 "black") (/ (image-width image) 2) (- (/ (image-height image) 2) 130) background-image))
-      image
-  ))
+      (if (null? (monsters-list-of-monsters (world-monsters world)))
+          (place-image (text (format "Press [space] to restart") 20 "black") (/ (image-width image) 2) (- (/ (image-height image) 2) 70) 
+      (place-image (text (format "Nice! You beat the game!") 50 "black") (/ (image-width image) 2) (- (/ (image-height image) 2) 130) background-image))
+          image))
+  )
 
 ;; @created by : T
 ;; @name : draw-bullet
@@ -93,7 +96,7 @@
                                                      (player-direction (world-player world))
                                                      (player-speed-x world)
                                                      (player-speed-y world))
-                                        (make-monsters (monsters-list-of-monsters (world-monsters world)))
+                                        (world-monsters world)
                                         (make-bullets (cdr (bullets-list-of-bullets (world-bullets world))))))
                           )    
              )
@@ -110,7 +113,8 @@
 ;; @brief : takes up a world and draws corresponding image on the background
 (define (draw-monsters world)
   (if (null? (monsters-list-of-monsters (world-monsters world)))
-      (place-image (text (format "Health: ~a" (player-health (world-player world))) 24 "white") 60 610 background-image)
+      (place-image (text (format "Points: ~a" (monsters-numdead (world-monsters world))) 24 "white") 400 610
+      (place-image (text (format "Health: ~a" (player-health (world-player world))) 24 "white") 60 610 background-image))
       (begin (place-image monster-image
                           (monster-coordinate-x world)
                           (monster-coordinate-y world)
@@ -122,7 +126,7 @@
                                                      (player-direction (world-player world))
                                                      (player-speed-x world)
                                                      (player-speed-y world))
-                                        (make-monsters (cdr (monsters-list-of-monsters (world-monsters world))))
+                                        (make-monsters (cdr (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world)))
                                         (make-bullets (bullets-list-of-bullets (world-bullets world))))))
                                         )))
 
@@ -188,21 +192,23 @@
                            (player-direction (world-player world))
                            (/ (player-speed-x world) friction-x)
                            (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
-              (monster-health-deletion (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world)))) (world-bullets world)) 
+              (monster-health-deletion (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world))) (world-bullets world)) 
               (make-bullets (map bullet-map-filter (bullet-removal (bullets-list-of-bullets (world-bullets world)))))
               )
   )
 
 (define (monster-health-deletion monsters bullets)
   (if (null? (monsters-list-of-monsters monsters))
-      (make-monsters '())
+      monsters
       (if (null? (bullets-list-of-bullets bullets))
           monsters
           (if (bullets-touch-monster (bullets-list-of-bullets bullets) (car (monsters-list-of-monsters monsters)))
-              (make-monsters (cons (make-monster -500 -500 'dead 'up) (monsters-list-of-monsters (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters))) bullets))))
-              (make-monsters (cons (car (monsters-list-of-monsters monsters)) (monsters-list-of-monsters (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters))) bullets)))))
-      )
-  ))
+              (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters)) (+ 1 (monsters-numdead monsters))) bullets)
+              (let ([nextmonsters (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters)) (monsters-numdead monsters)) bullets)])
+                (make-monsters (cons (car (monsters-list-of-monsters monsters))
+                                   (monsters-list-of-monsters nextmonsters)) (monsters-numdead nextmonsters)))))) )
+      
+
 
 (define (bullets-touch-monster bullets monster)
   (if (null? bullets)
@@ -225,7 +231,7 @@
                            (player-direction (world-player world))
                            (player-speed-x world)
                            (player-speed-y world))
-          (player-health-deletion player (make-monsters (cdr (monsters-list-of-monsters monsters))) world)
+          (player-health-deletion player (make-monsters (cdr (monsters-list-of-monsters monsters)) (monsters-numdead monsters)) world)
   )))
 
 
@@ -339,7 +345,7 @@
                              'left
                              -10
                              (player-speed-y world))
-                            (make-monsters (monsters-list-of-monsters (world-monsters world)))
+                            (make-monsters (monsters-list-of-monsters (world-monsters world)) (monsters-numdead (world-monsters world)))
                             (make-bullets (bullets-list-of-bullets (world-bullets world)))
                             )
                              ]
@@ -352,7 +358,7 @@
                              'right
                              10
                              (player-speed-y world))
-                            (make-monsters (monsters-list-of-monsters (world-monsters world)))
+                            (make-monsters (monsters-list-of-monsters (world-monsters world)) (monsters-numdead (world-monsters world)))
                             (make-bullets (bullets-list-of-bullets (world-bullets world)))
                             )]
     [(key=? a-key "up")  (make-world
@@ -364,21 +370,21 @@
                              (player-direction (world-player world))
                              (player-speed-x world)
                              (if (< (player-coordinate-y world) 500) (player-speed-y world) -20))
-                            (make-monsters (monsters-list-of-monsters (world-monsters world)))
+                            (make-monsters (monsters-list-of-monsters (world-monsters world)) (monsters-numdead (world-monsters world)))
                             (make-bullets (bullets-list-of-bullets (world-bullets world)))
                             )
                              ]
-    [(key=? a-key " ")  (if (<= (player-health (world-player world)) 0)
+    [(key=? a-key " ")  (if (or (<= (player-health (world-player world)) 0) (null? (monsters-list-of-monsters (world-monsters world))))
                                  (make-world (make-player 20 500 3 'alive 'right 0 0)
                         (make-monsters (list (make-monster 800 200 'alive 'up)
                                              (make-monster 700 100 'alive 'down)
-                                             (make-monster 600 250'alive 'right)
-                                             (make-monster 500 100 'alive 'left)
-                                             (make-monster 400 250 'alive 'left)
+                                             (make-monster 600 450'alive 'right)
+                                             (make-monster 500 400 'alive 'left)
+                                             (make-monster 400 450 'alive 'left)
                                              (make-monster 300 150 'alive 'up)
                                              (make-monster 200 300 'alive 'down)
                                              (make-monster 100 100 'alive 'up)
-                                             (make-monster 900 250 'alive 'right)))
+                                             (make-monster 900 450 'alive 'right)) 0)
                         (make-bullets (list (make-bullet 49 497 'alive 'right))))
                                  (make-world
                             (make-player
@@ -389,7 +395,7 @@
                              (player-direction (world-player world))
                              (player-speed-x world)
                              (player-speed-y world))
-                            (make-monsters (monsters-list-of-monsters (world-monsters world)))
+                            (make-monsters (monsters-list-of-monsters (world-monsters world)) (monsters-numdead (world-monsters world)))
                             (make-bullets (cons
                                            (make-bullet (player-coordinate-x world) (player-coordinate-y world) 'alive
                                                         (player-direction (world-player world)))
@@ -407,13 +413,13 @@
             (make-world (make-player 20 500 3 'alive 'right 0 0)
                         (make-monsters (list (make-monster 800 200 'alive 'up)
                                              (make-monster 700 100 'alive 'down)
-                                             (make-monster 600 250'alive 'right)
-                                             (make-monster 500 100 'alive 'left)
-                                             (make-monster 400 250 'alive 'left)
+                                             (make-monster 600 450'alive 'right)
+                                             (make-monster 500 400 'alive 'left)
+                                             (make-monster 400 450 'alive 'left)
                                              (make-monster 300 150 'alive 'up)
                                              (make-monster 200 300 'alive 'down)
                                              (make-monster 100 100 'alive 'up)
-                                             (make-monster 900 250 'alive 'right)))
+                                             (make-monster 900 450 'alive 'right)) 0)
                         (make-bullets '())) ;;initial world
             (to-draw the-one-for-all)
             (on-key change)
