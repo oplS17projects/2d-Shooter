@@ -15,44 +15,32 @@
 
 ;; MISSING:
 ;;
-;; 1. Projectile movements
-;; 3. shooting bullets ++ multiple bullets
 ;; 4. enemy bullets
 ;; 5. interactions between projectile and soldier
 ;; 5. sound effects
 ;; 6. menu
 
 
-
+(define gravity-y 3)
+(define friction-x 1.1)
 
 ;; structure for world
 (define-struct world [player enemy bullets])
 
+;; structure for bullets
 (define-struct bullets (list-of-bullets))
 
 
-;; bullet should be list . i tihnk
-;; list of bulle
-;; structure for bulet
 ;; status for collision and out of bounds
-;; need cleanup fucntion
-(define-struct bullet [x-coordinate y-coordinate x-speed y-speed status])
+;; direction for moving the bullet
+(define-struct bullet [x-coordinate y-coordinate status direction])
 
 ;; if status == dead create 1 else stay
 (define-struct enemy [x-coordinate y-coordinate status])
 
-(define gravity-y 3)
-(define friction-x 1.1)
-
 ;; direction for shooting bullets
 ;; if health == 0 game over starts with 3 decreases as make contact
 (define-struct player [x-coordinate y-coordinate health status direction x-speed y-speed])
-
-;;player needs direction 
-
-
-
-
 
 
 ;; @created by : T
@@ -62,7 +50,6 @@
 ;; @returns : nothing
 ;; @brief : takes up a world and draws corresponding image on the background
 ;; this function also calls the function to draw bullet
-
 (define (the-one-for-all world)
   (if (eq? (player-direction (world-player world)) 'right)
       (place-image player-image-right
@@ -73,8 +60,7 @@
                    (player-x-coordinate  (world-player world))
                    (player-y-coordinate (world-player world))
                    (draw-bullet world))
-      )
-  
+      ) 
   )
 
 ;; @created by : T
@@ -84,11 +70,6 @@
 ;; @returns : nothing
 ;; @brief : takes up a world and draws corresponding image on the background
 ;; this function also calls the function to draw enemy
-
-
-;; bullet list
-;; cons everytime 
-
 (define (draw-bullet world)
   (if (null? (bullets-list-of-bullets (world-bullets world)))
       (draw-enemy world)
@@ -111,9 +92,7 @@
   )
 
 
- 
-
-
+  
 ;; @created by : T
 ;; @name : draw-bullet
 ;; @variable : world
@@ -125,17 +104,9 @@
   (place-image enemy-image
                (enemy-coordinate-x world)
                (enemy-coordinate-y world)
-               background-image 200 200
+               background-image
                )
   )
-
-;; the draw function
-
-
-;;
-
-
-
 
 ;;accessors starts here
 
@@ -166,14 +137,6 @@
   (player-y-coordinate (world-player world))
   )
 
-(define (bullet-speed-x world)
-  (bullet-x-speed (car (bullets-list-of-bullets (world-bullets world))))
-  )
-
-(define (bullet-speed-y world)
-  (bullet-y-speed (car (bullets-list-of-bullets (world-bullets world))))
-  )
-
 (define (player-speed-x world)
   (player-x-speed (world-player world))
   )
@@ -198,21 +161,72 @@
 ;;  ~world type object
 ;; @returns : world type object
 ;; @brief : takes a world and returns an world type object with updated coordinates
-
 (define (the-tick-handler world)
         (make-world (make-player (+ (player-coordinate-x world) (player-speed-x world))
                (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
-               (player-health (world-player world))
-               (player-status (world-player world))
-               (player-direction (world-player world))
-               (/ (player-speed-x world) friction-x)
-               (+ (player-speed-y world) gravity-y))
+                           (player-health (world-player world))
+                           (player-status (world-player world))
+                           (player-direction (world-player world))
+                           (/ (player-speed-x world) friction-x)
+                           (+ (player-speed-y world) gravity-y))
               (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
-              (make-bullets (bullets-list-of-bullets (world-bullets world)))
+              (make-bullets 
+               (map bullet-map-filter (bullet-removal (bullets-list-of-bullets (world-bullets world)))))
               )
-
-      
   )
+
+
+;; @created by : T
+;; @name : bullet-map-filter 
+;; @variable : bullet
+;;  ~bullet type object
+;; @returns : bullet type object
+;; @brief : takes a bullet and returns an world type object with updated coordinates + status
+(define (bullet-map-filter bullet)
+  (cond
+    [(eq? (bullet-direction bullet) 'right)
+     (if (> (bullet-x-coordinate bullet) 500)
+         (make-bullet
+         (+ (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'dead 'right)
+         (make-bullet
+         (+ (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'right))
+     ]
+    [(eq? (bullet-direction bullet) 'left)
+     (if (< (bullet-x-coordinate bullet) 100)
+         (make-bullet
+         (- (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'dead 'left)
+         (make-bullet
+         (- (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'left))
+         ]
+    [else (make-bullet
+     (bullet-x-coordinate bullet) (bullet-y-coordinate bullet))]
+    )
+    )
+
+;; @created by : T
+;; @name : isAlive?
+;; @variable : bullet
+;;  ~bullet type object
+;; @returns : predicate
+;; @brief : takes a bullet returns predicate
+(define (isAlive? bullet)
+  (if (eq? (bullet-status bullet) 'alive)
+      #t #f)
+  )
+
+
+
+;; @created by : T
+;; @name : bullet-removal 
+;; @variable : bullets
+;;  ~bullet type object
+;; @returns : bullet type object
+;; @brief : takes a list of bullets and returns list of alive bullets
+(define (bullet-removal bullets)
+  (filter isAlive? bullets)
+  )
+
+
 
 ;; @created by : T
 ;; @name : move-enemy
@@ -220,7 +234,6 @@
 ;;  ~world type object
 ;; @returns : enemy type object
 ;; @brief : takes a world and returns an enemy type object with updated coordinates
-
 (define (move-enemy world)
   (cond
     [(eq? (enemy-status (world-enemy world)) 'alive)
@@ -236,9 +249,10 @@
     )
   )
 
+
 (define (change world a-key)
   (cond
-    [(key=? a-key "left") (make-world
+    [(key=? a-key "left")  (make-world
                             (make-player
                              (player-coordinate-x world)
                              (player-coordinate-y world)
@@ -248,11 +262,9 @@
                              -10
                              (player-speed-y world))
                             (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
-                            (make-bullets (cons
-                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive
-                                                        (bullet-speed-x world) (bullet-speed-x world))
-                                           (bullets-list-of-bullets (world-bullets world))))
-                            )]
+                            (make-bullets (bullets-list-of-bullets (world-bullets world)))
+                            )
+                             ]
     [(key=? a-key "right") (make-world
                             (make-player
                              (player-coordinate-x world)
@@ -263,12 +275,9 @@
                              10
                              (player-speed-y world))
                             (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
-                            (make-bullets (cons
-                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive
-                                                        (bullet-speed-x world) (bullet-speed-x world))
-                                           (bullets-list-of-bullets (world-bullets world))))
+                            (make-bullets (bullets-list-of-bullets (world-bullets world)))
                             )]
-    [(key=? a-key "up") (make-world
+    [(key=? a-key "up")  (make-world
                             (make-player
                              (player-coordinate-x world)
                              (player-coordinate-y world)
@@ -278,13 +287,27 @@
                              (player-speed-x world)
                              (if (< (player-coordinate-y world) 500) (player-speed-y world) -20))
                             (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
+                            (make-bullets (bullets-list-of-bullets (world-bullets world)))
+                            )
+                             ]
+    [(key=? a-key " ")  (make-world
+                            (make-player
+                             (player-coordinate-x world)
+                             (player-coordinate-y world)
+                             (player-health (world-player world))
+                             (player-status (world-player world))
+                             (player-direction (world-player world))
+                             (player-speed-x world)
+                             (player-speed-y world))
+                            (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
                             (make-bullets (cons
-                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive
-                                                        (bullet-speed-x world) (bullet-speed-x world))
+                                           (make-bullet (player-coordinate-x world) (player-coordinate-y world) 'alive
+                                                        (player-direction (world-player world)))
                                            (bullets-list-of-bullets (world-bullets world))))
-                            )]
+                            )
+     
 
-    [(key=? a-key " ")  ]
+     ]
     [(= (string-length a-key) 1) world] 
     [else world]))
 
@@ -292,7 +315,7 @@
   (big-bang
             (make-world (make-player 20 500 3 'alive 'right 0 0)
                         (make-enemy 1000 500 'alive)
-                        (make-bullets (list (make-bullet 49 497 'alive 0 0)))) ;;initial world
+                        (make-bullets (list (make-bullet 49 497 'alive 'right)))) ;;initial world
             (to-draw the-one-for-all)
             (on-key change)
             [on-tick the-tick-handler])
