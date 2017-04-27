@@ -36,14 +36,17 @@
 ;; structure for bulet
 ;; status for collision and out of bounds
 ;; need cleanup fucntion
-(define-struct bullet [x-coordinate y-coordinate status])
+(define-struct bullet [x-coordinate y-coordinate x-speed y-speed status])
 
 ;; if status == dead create 1 else stay
 (define-struct enemy [x-coordinate y-coordinate status])
 
+(define gravity-y 3)
+(define friction-x 1.1)
+
 ;; direction for shooting bullets
 ;; if health == 0 game over starts with 3 decreases as make contact
-(define-struct player [x-coordinate y-coordinate health status direction])
+(define-struct player [x-coordinate y-coordinate health status direction x-speed y-speed])
 
 ;;player needs direction 
 
@@ -97,7 +100,9 @@
                                                      (player-coordinate-y world)
                                                      (player-health (world-player world))
                                                      (player-status (world-player world))
-                                                     (player-direction (world-player world)))
+                                                     (player-direction (world-player world))
+                                                     (player-speed-x world)
+                                                     (player-speed-y world))
                                         (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
                                         (make-bullets (cdr (bullets-list-of-bullets (world-bullets world))))))
                           )    
@@ -120,7 +125,7 @@
   (place-image enemy-image
                (enemy-coordinate-x world)
                (enemy-coordinate-y world)
-               background-image
+               background-image 200 200
                )
   )
 
@@ -161,6 +166,22 @@
   (player-y-coordinate (world-player world))
   )
 
+(define (bullet-speed-x world)
+  (bullet-x-speed (car (bullets-list-of-bullets (world-bullets world))))
+  )
+
+(define (bullet-speed-y world)
+  (bullet-y-speed (car (bullets-list-of-bullets (world-bullets world))))
+  )
+
+(define (player-speed-x world)
+  (player-x-speed (world-player world))
+  )
+
+(define (player-speed-y world)
+  (player-y-speed (world-player world))
+  )
+
 (define (enemy-coordinate-x world)
   (enemy-x-coordinate (world-enemy world))
   )
@@ -179,16 +200,15 @@
 ;; @brief : takes a world and returns an world type object with updated coordinates
 
 (define (the-tick-handler world)
-        (make-world (make-player (player-coordinate-x world)
-                           (player-coordinate-y world)
-                           (player-health (world-player world))
-                           (player-status (world-player world))
-                           (player-direction (world-player world)))
+        (make-world (make-player (+ (player-coordinate-x world) (player-speed-x world))
+               (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
+               (player-health (world-player world))
+               (player-status (world-player world))
+               (player-direction (world-player world))
+               (/ (player-speed-x world) friction-x)
+               (+ (player-speed-y world) gravity-y))
               (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
-              (make-bullets (cons
-                             (make-bullet ( + (bullet-coordinate-x world) 10)
-                                          (bullet-coordinate-y world) 'alive)
-                             (bullets-list-of-bullets (world-bullets world))))
+              (make-bullets (bullets-list-of-bullets (world-bullets world)))
               )
 
       
@@ -218,31 +238,49 @@
 
 (define (change world a-key)
   (cond
-    [(key=? a-key "left")  (make-world
+    [(key=? a-key "left") (make-world
                             (make-player
-                             (- (player-coordinate-x world) 5)
+                             (player-coordinate-x world)
                              (player-coordinate-y world)
                              (player-health (world-player world))
                              (player-status (world-player world))
-                             'left)
+                             'left
+                             -10
+                             (player-speed-y world))
                             (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
                             (make-bullets (cons
-                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive)
-                                           (bullets-list-of-bullets (world-bullets world))
-                                           )
-                                          )
-                            )
-                             ]
+                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive
+                                                        (bullet-speed-x world) (bullet-speed-x world))
+                                           (bullets-list-of-bullets (world-bullets world))))
+                            )]
     [(key=? a-key "right") (make-world
                             (make-player
-                             (+ (player-coordinate-x world) 5)
+                             (player-coordinate-x world)
                              (player-coordinate-y world)
                              (player-health (world-player world))
                              (player-status (world-player world))
-                             'right)
+                             'right
+                             10
+                             (player-speed-y world))
                             (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
                             (make-bullets (cons
-                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive)
+                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive
+                                                        (bullet-speed-x world) (bullet-speed-x world))
+                                           (bullets-list-of-bullets (world-bullets world))))
+                            )]
+    [(key=? a-key "up") (make-world
+                            (make-player
+                             (player-coordinate-x world)
+                             (player-coordinate-y world)
+                             (player-health (world-player world))
+                             (player-status (world-player world))
+                             (player-direction (world-player world))
+                             (player-speed-x world)
+                             (if (< (player-coordinate-y world) 500) (player-speed-y world) -20))
+                            (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
+                            (make-bullets (cons
+                                           (make-bullet (bullet-coordinate-x world) (bullet-coordinate-y world) 'alive
+                                                        (bullet-speed-x world) (bullet-speed-x world))
                                            (bullets-list-of-bullets (world-bullets world))))
                             )]
 
@@ -252,9 +290,9 @@
 
 (define (LETSGO)
   (big-bang
-            (make-world (make-player 20 500 3 'alive 'right)
+            (make-world (make-player 20 500 3 'alive 'right 0 0)
                         (make-enemy 1000 500 'alive)
-                        (make-bullets (list (make-bullet 49 497 'alive)))) ;;initial world
+                        (make-bullets (list (make-bullet 49 497 'alive 0 0)))) ;;initial world
             (to-draw the-one-for-all)
             (on-key change)
             [on-tick the-tick-handler])
