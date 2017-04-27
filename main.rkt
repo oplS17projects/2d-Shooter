@@ -15,8 +15,6 @@
 
 ;; MISSING:
 ;;
-;; 1. Projectile movements
-;; 3. shooting bullets ++ multiple bullets
 ;; 4. enemy bullets
 ;; 5. interactions between projectile and soldier
 ;; 5. sound effects
@@ -28,14 +26,12 @@
 ;; structure for world
 (define-struct world [player enemy bullets])
 
+;; structure for bullets
 (define-struct bullets (list-of-bullets))
 
 
-;; bullet should be list . i tihnk
-;; list of bulle
-;; structure for bulet
 ;; status for collision and out of bounds
-;; need cleanup fucntion
+;; direction for moving the bullet
 (define-struct bullet [x-coordinate y-coordinate status direction])
 
 ;; if status == dead create 1 else stay
@@ -45,12 +41,6 @@
 ;; if health == 0 game over starts with 3 decreases as make contact
 (define-struct player [x-coordinate y-coordinate health status direction])
 
-;;player needs direction 
-
-
-
-
-
 
 ;; @created by : T
 ;; @name : the-one-for-all
@@ -59,7 +49,6 @@
 ;; @returns : nothing
 ;; @brief : takes up a world and draws corresponding image on the background
 ;; this function also calls the function to draw bullet
-
 (define (the-one-for-all world)
   (if (eq? (player-direction (world-player world)) 'right)
       (place-image player-image-right
@@ -80,11 +69,6 @@
 ;; @returns : nothing
 ;; @brief : takes up a world and draws corresponding image on the background
 ;; this function also calls the function to draw enemy
-
-
-;; bullet list
-;; cons everytime 
-
 (define (draw-bullet world)
   (if (null? (bullets-list-of-bullets (world-bullets world)))
       (draw-enemy world)
@@ -166,7 +150,6 @@
 ;;  ~world type object
 ;; @returns : world type object
 ;; @brief : takes a world and returns an world type object with updated coordinates
-
 (define (the-tick-handler world)
         (make-world (make-player (player-coordinate-x world)
                            (player-coordinate-y world)
@@ -175,7 +158,7 @@
                            (player-direction (world-player world)))
               (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)
               (make-bullets 
-               (map bullet-map-filter (bullets-list-of-bullets (world-bullets world))))
+               (map bullet-map-filter (bullet-removal (bullets-list-of-bullets (world-bullets world)))))
               )
   )
 
@@ -185,20 +168,52 @@
 ;; @variable : bullet
 ;;  ~bullet type object
 ;; @returns : bullet type object
-;; @brief : new bullet type object with updated coordinates in the following direction
-
+;; @brief : takes a bullet and returns an world type object with updated coordinates + status
 (define (bullet-map-filter bullet)
   (cond
     [(eq? (bullet-direction bullet) 'right)
+     (if (> (bullet-x-coordinate bullet) 500)
          (make-bullet
-              (+ (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'right)]
+         (+ (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'dead 'right)
+         (make-bullet
+         (+ (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'right))
+     ]
     [(eq? (bullet-direction bullet) 'left)
+     (if (< (bullet-x-coordinate bullet) 100)
          (make-bullet
-     (- (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'left)]
+         (- (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'dead 'left)
+         (make-bullet
+         (- (bullet-x-coordinate bullet) 10) (bullet-y-coordinate bullet) 'alive 'left))
+         ]
     [else (make-bullet
      (bullet-x-coordinate bullet) (bullet-y-coordinate bullet))]
     )
     )
+
+;; @created by : T
+;; @name : isAlive?
+;; @variable : bullet
+;;  ~bullet type object
+;; @returns : predicate
+;; @brief : takes a bullet returns predicate
+(define (isAlive? bullet)
+  (if (eq? (bullet-status bullet) 'alive)
+      #t #f)
+  )
+
+
+
+;; @created by : T
+;; @name : bullet-removal 
+;; @variable : bullets
+;;  ~bullet type object
+;; @returns : bullet type object
+;; @brief : takes a list of bullets and returns list of alive bullets
+(define (bullet-removal bullets)
+  (filter isAlive? bullets)
+  )
+
+
 
 ;; @created by : T
 ;; @name : move-enemy
@@ -206,7 +221,6 @@
 ;;  ~world type object
 ;; @returns : enemy type object
 ;; @brief : takes a world and returns an enemy type object with updated coordinates
-
 (define (move-enemy world)
   (cond
     [(eq? (enemy-status (world-enemy world)) 'alive)
@@ -221,6 +235,7 @@
     [else (make-enemy (enemy-coordinate-x world) (enemy-coordinate-y world) 'alive)]
     )
   )
+
 
 (define (change world a-key)
   (cond
