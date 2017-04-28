@@ -1,5 +1,10 @@
 # 2d-Shooter 
 
+
+<p align="center" width="300">
+<img src="https://raw.githubusercontent.com/oplS17projects/2d-Shooter/master/game_screen.png">
+</p>
+
 ### Statement 
 Our project is 2d side scrolling shooter game, similar to the game contra. This was an interesting idea because we both learned how the
 2htdp graphics and rsound libraries worked and by bringing them together we produced this game. Since we were both interested in
