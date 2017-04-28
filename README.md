@@ -36,13 +36,30 @@ So far, the game has 2 the beginning and the final level is the boss level.
 All in all, the game is at 90 percent and only need minor apperance tweaks for user pleasure. 
 
 ## Architecture Diagram
-First block is the user input where we will use 2htdp-universe library to implement
+We load the world with 4 objects the player, bullet, enemy, and boss
 
-Game design will also be using 2htdp-image/universe
+We check if a collision occurs for any of the objects:
+# True: 
+player life - 1
 
-Sound will link to the Game using rsound
+destroy bullet
 
-Sprite interaction using 2htdp-universe to update the world when sprites collide
+destroy enemy
+
+boss life -1
+
+# False: 
+Update the world
+
+We check the following:
+
+Player life = 0 -> game over screen and reset game
+
+enemy list = '() -> go to boss stage
+
+boss health = 0 -> win screen
+
+Lastly we linked the collision whenever bullet list is less than the old bullet list and fire sound bound to the spacebar key and upate the world
 
 <p align="center" width="500" height= "600">
 <img src="https://github.com/oplS17projects/2d-Shooter/blob/master/2d-shooter%20diagram%20-%20Page%201.png">
