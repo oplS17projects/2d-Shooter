@@ -39,7 +39,9 @@ Sound will link to the Game using rsound
 
 Sprite interaction using 2htdp-universe to update the world when sprites collide
 
-<img src="https://github.com/oplS17projects/2d-Shooter/blob/master/Screen%20Shot%202017-04-02%20at%208.16.12%20PM.png" width="800" height="800">
+<p align="center" width="500">
+<img src="https://github.com/oplS17projects/2d-Shooter/blob/master/Screen%20Shot%202017-04-02%20at%208.16.12%20PM.png">
+</p>
 
 ## Schedule
 ### First Milestone (Sun Apr 9)
