@@ -1,35 +1,34 @@
 # 2d-Shooter 
 
 ### Statement 
-Our project will be a 2d side scrolling shooter, similar to the game contra. This is interesting because we both will be
-able to learn how the 2htdp graphics and rsound libraries work and bring them together to produce this game. We both personally
-find this idea interesting because we both like to play games in our free time and thought that it would be fun to implement our
-own game. We hope to learn how to implement concepts we learned in class like object oriented programming and data abstraction
-and apply it to our idea.
+Our project is 2d side scrolling shooter game, similar to the game contra. This was an interesting idea because we both learned how the
+2htdp graphics and rsound libraries worked and by bringing them together we produced this game. Since we were both interested in
+games, we really enjoyed developing our own game. We implemented various data structures, lists, maps, filters into our code and used it
+efficiently.
 
 ### Analysis
-Since this game is a shooter game we will need to use object orientation to create the player, bullet, and enemy objects. We have not
-completely figured out on exactly how we wish to update the world itself, but we may use state-modification or data abstraction techniques
-in order to update player, bullet, and enemy object positions. For example how fast different enemies approach the player sprite will
-use these concepts mentioned above.
+We implemented the game at 3 layer deep abstraction. (world -> player -> bullet -> bullet-list etc.) Since it is 2d shooter game we had
+to pass around the world which has player, bullet and the enemy inside. By passing the world around we were able to update the location
+of the player and the enemy at the same time using the on-tick function.
+We started off with just a picture and a player-sprite. As we discovered 2htdp/graphics library, we found out that in order to place 2 
+different image at the same time we had to place one of them inside the other place-image function. With this information, we were able
+to implement moving enemy, player and exactly one bullet. Then arose the second problem, how to get multiple bullets? We struggled with
+the idea for a while and finally changed the bullets into a list which has bullet object inside. Everytime the on-tick function triggers
+it cdrs down the list and draws each one of them which gets updated as it goes on.
 
 ### External Technologies
-Our project will allow users to have control on how the character sprite moves by using the arrow keys and spacebar. We will also 
+Our game allows users to have control on how the character sprite moves by using the arrow keys and spacebar. We also 
 generate sound using the rsound library.
 
 ### Data Sets or other Source Materials
-We will not be using extensive outside materials other than importing character, bullet, and enemy sprites. Since most of the needed material
-to make this project work is implementing the 2htdp graphics library and rsound library.
+Only source materials we used was the imported images and sprites
 
 ### Deliverable and Demonstration
-At the end of this project we hope to have created an interactive game that catches the users attention. At the live demo users will be able
-to play through levels which progressively get harder and they will be able to experience certain interactions we have created in game. We hope 
-to produce a solid game that is interactive and hopefully easily re-runnable with no bugs.
+So far, the game has 4 levels and it gets harder as it goes on. The final level is the boss level. 
+
 
 ### Evaluation of Results 
-We will know that we are successful if we are able to produce solid game with no bugs. For example while exploring the 2htdp graphics
-library we personally had some errors due to user input. Since that is the foundation of our project, if users are able to fluidly run through
-the game without it crashing we will know were successful.
+All in all, the game is at 90 percent and only need minor apperance tweaks for user pleasure. 
 
 ## Architecture Diagram
 First block is the user input where we will use 2htdp-universe library to implement
