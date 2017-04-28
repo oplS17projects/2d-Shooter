@@ -3,9 +3,10 @@
 (require 2htdp/universe)
 (require rsound)
 
-;; importing images which should be in different file
-;; all the importing should be in different file
-;; the sound should be imported also.
+;; ------------------------------------------------2D SHOOTER GAME--------------------------------------------------
+;; -------------------------------------------By: luffy1727, dannynguyen1 ------------------------------------------
+;; -----------------------------------------------------------------------------------------------------------------
+;; -------------------------------------------- 2017----------------------------------------------------------------
 
 (define player-image-right (bitmap "character_sprite_right.png"))
 (define player-image-left (bitmap "character_sprite_left.png"))
@@ -22,40 +23,29 @@
 (define collisionSound (rs-read collision))
 (define gravity-y 3)
 (define friction-x 1.5)
-
-
-;(define monster-bullet (bitmap "bullet1.png")) should be replaced with monster bullets
-
-;; MISSING:
-;;
-;; 4. monster bullets
-;; 5. sound effects
-;; 6. menu
+(define backgroundmusic (make-pstream))
 
 
 ;; structure for world
+;; @player - player object [x y health status direction x-speed y-speed]
+;; @monsters - monster object [list-of-monsters numdead]
+;; @bullets - list of bullets
+;; @lvl - current lvl [integer]
+;; @boss - boss object [x y health status]
 (define-struct world [player monsters bullets lvl boss])
 
-;; structure for bullets
 (define-struct bullets (list-of-bullets))
 
 (define-struct monsters (list-of-monsters numdead))
 
-
-;; status for collision and out of bounds
-;; direction for moving the bullet
 (define-struct bullet [x-coordinate y-coordinate status direction type])
 
-;; if status == dead create 1 else stay
 (define-struct monster [x-coordinate y-coordinate status direction])
 
-;; direction for shooting bullets
-;; if health == 0 game over starts with 3 decreases as make contact
 (define-struct player [x-coordinate y-coordinate health status direction x-speed y-speed])
 
-(define backgroundmusic (make-pstream))
-
 (define-struct boss [x-coordinate y-coordinate health status])
+
 
 ;; @created by : T
 ;; @name : the-one-for-all
@@ -224,7 +214,6 @@
 ;;  ~world type object
 ;; @returns : integer
 ;; @brief : takes a world and returns an integer type number for corresponding object
-
 (define (bullet-coordinate-x world)
   (bullet-x-coordinate (car (bullets-list-of-bullets (world-bullets world))))
   )
@@ -286,60 +275,70 @@
 (define (the-tick-handler world)
   (if
    (eq? (world-lvl world) 2)
-   ;(if (eq? (bullet-status-acc world) 'dead)
-    (if #f
-       (monster-health-deletion (make-world (player-health-deletion (make-player (+ (player-coordinate-x world) (player-speed-x world))
-                                                        (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
-                                                        (player-health (world-player world))
-                                                        (player-status (world-player world))
-                                                        (player-direction (world-player world))
-                                                        (/ (player-speed-x world) friction-x)
-                                                        (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
-                   (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world))) 
-                   (make-bullets (cons
-                                  (make-bullet (boss-coordinate-x world) (boss-coordinate-y world) 'alive
-                                               'left 'enemy)
-                                  (map bullet-map-filter (bullets-list-of-bullets (world-bullets world)))))
-                   (world-lvl world) ;lvl
-                   (make-boss (boss-coordinate-x world) (boss-coordinate-y world)
-                              (boss-health (world-boss world)) 'dead)
-                   
-                   ))
-       (monster-health-deletion (make-world (player-health-deletion (make-player (+ (player-coordinate-x world) (player-speed-x world))
-                                                        (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
-                                                        (player-health (world-player world))
-                                                        (player-status (world-player world))
-                                                        (player-direction (world-player world))
-                                                        (/ (player-speed-x world) friction-x)
-                                                        (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
-                   (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world))) 
-                   (make-bullets (map bullet-map-filter (bullets-list-of-bullets (world-bullets world))))
-                   (world-lvl world) ;lvl
-                   (make-boss (boss-coordinate-x world) (boss-coordinate-y world)
-                              (boss-health (world-boss world)) 'dead)
-                   
-                   ))
-       
-       
+   (if (null? (bullets-list-of-bullets (world-bullets world)))
+       (boss-bullet-update world)
+       (if (eq? (bullet-type-acc world) 'enemy)
+           (if (eq? (bullet-status-acc world) 'alive)
+           (bullet-update world)
+           (boss-bullet-update world))
+           (bullet-update world)
+           )
        )
-   (monster-health-deletion (make-world (player-health-deletion (make-player (+ (player-coordinate-x world) (player-speed-x world))
-                                                    (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
-                                                    (player-health (world-player world))
-                                                    (player-status (world-player world))
-                                                    (player-direction (world-player world))
-                                                    (/ (player-speed-x world) friction-x)
-                                                    (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
-               (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world)))
-               (make-bullets (map bullet-map-filter (bullets-list-of-bullets (world-bullets world))))
-               (world-lvl world) ;lvl
-               (make-boss (boss-coordinate-x world) (boss-coordinate-y world)
-                          (boss-health (world-boss world)) 'dead)
-               
-               ))
-   
-   )
   
+   (bullet-update world)
+   )
   )
+
+;; -----------------------------------------under construction -------------------------------
+(define (anyBossBullets? list-of-bullets pred)
+  (if (null? list-of-bullets)
+      pred
+      (begin (if (and (eq? (bullet-status (car list-of-bullets)) 'alive)
+                      (eq? (bullet-type (car list-of-bullets)) 'enemy))
+                     (set! pred #t)
+                     pred
+                     )
+                 (anyBossBullets? (cdr list-of-bullets) pred)))
+      )
+
+(define (bullet-update world)
+  (monster-health-deletion (make-world (player-health-deletion (make-player (+ (player-coordinate-x world) (player-speed-x world))
+                                                                            (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
+                                                                            (player-health (world-player world))
+                                                                            (player-status (world-player world))
+                                                                            (player-direction (world-player world))
+                                                                            (/ (player-speed-x world) friction-x)
+                                                                            (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
+                                       (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world))) 
+                                       (make-bullets (map bullet-map-filter (bullets-list-of-bullets (world-bullets world))))
+                                       (world-lvl world) ;lvl
+                                       (make-boss (boss-coordinate-x world) (boss-coordinate-y world)
+                                                  (boss-health (world-boss world)) 'dead)
+                                       
+                                       ))
+  )
+
+(define (boss-bullet-update world)
+  (monster-health-deletion (make-world (player-health-deletion (make-player (+ (player-coordinate-x world) (player-speed-x world))
+                                                                            (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
+                                                                            (player-health (world-player world))
+                                                                            (player-status (world-player world))
+                                                                            (player-direction (world-player world))
+                                                                            (/ (player-speed-x world) friction-x)
+                                                                            (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
+                                       (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world))) 
+                                       (make-bullets (cons
+                                                      (make-bullet (boss-coordinate-x world) (boss-coordinate-y world) 'alive
+                                                                   'left 'enemy)
+                                                      (map bullet-map-filter (bullets-list-of-bullets (world-bullets world)))))
+                                       (world-lvl world) ;lvl
+                                       (make-boss (boss-coordinate-x world) (boss-coordinate-y world)
+                                                  (boss-health (world-boss world)) 'dead)
+                                       
+                                       ))
+  )
+
+
 
 ; Take in a world, deletes monsters from the world which are touching a bullet and delete bullets which are touching monsters.
 ; Return a new world which removes the colliding objects.
@@ -385,6 +384,13 @@
   ))
   )
 
+
+;; @created by : danny
+;; @name : player-health-deletion
+;; @variable : monsters world
+;;  @monsters - list of monster type object
+;;  @world - world type object
+;; @returns : player-type object with updated health bar
 (define (player-health-deletion player monsters world)
   (if (null? (monsters-list-of-monsters monsters))
       player
@@ -525,9 +531,11 @@
                                        (boss-health (world-boss world)) 'dead)
                             )
                          ]
+
+;----------------boss level under construction ----------------
     [(key=? a-key " ")
      (if (eq? (world-lvl world) 2)
-         (if (<= (player-health (world-player world)) 0)
+         (if (or (<= (player-health (world-player world)) 0) (<= (boss-health-acc world) 0))
          ('dead)
          (make-world
                                   (make-player
@@ -551,7 +559,7 @@
          (if (or (<= (player-health (world-player world)) 0)
                                 (null? (monsters-list-of-monsters (world-monsters world)))) 
 
-                            (begin (display 'comighere)(make-world (make-player 20 500 3 'alive 'right 0 0)
+                            (make-world (make-player 20 500 3 'alive 'right 0 0)
                         (make-monsters (list (make-monster 800 200 'alive 'up)
                                              (make-monster 700 100 'alive 'down)
                                              (make-monster 600 450'alive 'right)
@@ -562,10 +570,10 @@
                                              (make-monster 100 100 'alive 'up)
                                              (make-monster 900 450 'alive 'right)) 0)
                         (make-bullets (list (make-bullet 49 497 'alive 'right 'normal)))
-                        (begin (display (world-lvl world))(+ (world-lvl world) 1 ))
+                        (world-lvl world)
                         (make-boss (boss-coordinate-x world) (boss-coordinate-y world)
                                    (boss-health (world-boss world)) 'dead)
-                        ))
+                        )
                             (make-world
                                   (make-player
                                    (player-coordinate-x world)
