@@ -29,7 +29,7 @@ generate sound using the rsound library.
 Only source materials we used was the imported images and sprites
 
 ### Deliverable and Demonstration
-So far, the game has 4 levels and it gets harder as it goes on. The final level is the boss level. 
+So far, the game has 2 the beginning and the final level is the boss level. 
 
 
 ### Evaluation of Results 
@@ -56,20 +56,26 @@ events working properly for the character sprite.
 ### Second Milestone (Sun Apr 16)
 For the second milestone we will have the enemy and projectile sprites functional. We will also have the sound implemented.
 
-### Public Presentation (Mon Apr 24, Wed Apr 26, or Fri Apr 28 [your date to be determined later])
-For the public presentation we will have completed testing with the game and have a fully functional game to demo. Where user input
-is correctly implemented along with interaction between enemies and players. 
+### Public Presentation Fri Apr 28 
+For this public presentation we have created a functional game that takes in user input, and has two playable stages.
+All character, projectiles, and enemies are functional.
+Sound has also been implemented for when the character fires a bullet and when that bullet collides with enemies.
 
 ## Group Responsibilities
 
 ### Danny Nguyen @dannynguyen1
-will write the event that take in input from the user
+User input
 
-Will work on movement of the character sprire
+Sound with rsound
 
 ### Chintushig Ochirsukh @luffy1727
-Will work on the incorporating sound
+Projectile movement 
 
-Will work on projectile movement
+Enemy functionalities
+
+### What we did together @dannynguyen1 and @luffy1727
+Projectile interactions and filtering
+
+Collisions
 
  
