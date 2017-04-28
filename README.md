@@ -44,8 +44,8 @@ Sound will link to the Game using rsound
 
 Sprite interaction using 2htdp-universe to update the world when sprites collide
 
-<p align="center" width="500">
-<img src="https://github.com/oplS17projects/2d-Shooter/blob/master/Screen%20Shot%202017-04-02%20at%208.16.12%20PM.png">
+<p align="center" width="500" height= "600">
+<img src="https://github.com/oplS17projects/2d-Shooter/blob/master/2d-shooter%20diagram%20-%20Page%201.png">
 </p>
 
 ## Schedule
