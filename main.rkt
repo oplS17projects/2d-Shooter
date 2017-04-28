@@ -1,6 +1,7 @@
 #lang racket
 (require 2htdp/image)
 (require 2htdp/universe)
+(require rsound)
 
 ;; importing images which should be in different file
 ;; all the importing should be in different file
@@ -11,6 +12,14 @@
 (define monster-image (bitmap "enemy.jpg"))
 (define bullet-image (bitmap "bullet1.png"))
 (define background-image (bitmap "background.png"))
+(define music "/Users/dannynguyen/Desktop/OPL/2d-shooter")
+(define fire (build-path music "fire 1.wav"))
+(define collision (build-path music "bangMedium 1.wav"))
+(define firingSound (rs-read fire))
+(define collisionSound (rs-read collision))
+(define gravity-y 3)
+(define friction-x 1.5)
+
 ;(define monster-bullet (bitmap "bullet1.png")) should be replaced with monster bullets
 
 ;; MISSING:
@@ -20,9 +29,6 @@
 ;; 5. sound effects
 ;; 6. menu
 
-
-(define gravity-y 3)
-(define friction-x 1.5)
 
 ;; structure for world
 (define-struct world [player monsters bullets])
@@ -43,6 +49,8 @@
 ;; direction for shooting bullets
 ;; if health == 0 game over starts with 3 decreases as make contact
 (define-struct player [x-coordinate y-coordinate health status direction x-speed y-speed])
+
+(define backgroundmusic (make-pstream))
 
 
 ;; @created by : T
@@ -185,38 +193,58 @@
 ;; @returns : world type object
 ;; @brief : takes a world and returns an world type object with updated coordinates
 (define (the-tick-handler world)
-        (make-world (player-health-deletion (make-player (+ (player-coordinate-x world) (player-speed-x world))
+        (monster-health-deletion (make-world (player-health-deletion (make-player (+ (player-coordinate-x world) (player-speed-x world))
                (min 500 (max 100 (+ (player-coordinate-y world) (player-speed-y world))))
                            (player-health (world-player world))
                            (player-status (world-player world))
                            (player-direction (world-player world))
                            (/ (player-speed-x world) friction-x)
                            (+ (player-speed-y world) gravity-y)) (world-monsters world) world)
-              (monster-health-deletion (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world))) (world-bullets world)) 
-              (make-bullets (map bullet-map-filter (bullet-removal (bullets-list-of-bullets (world-bullets world)))))
-              )
+              (make-monsters (map monster-map-filter (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world))) 
+              (make-bullets (map bullet-map-filter (bullets-list-of-bullets (world-bullets world))))
+              ))
   )
 
-(define (monster-health-deletion monsters bullets)
-  (if (null? (monsters-list-of-monsters monsters))
-      monsters
-      (if (null? (bullets-list-of-bullets bullets))
-          monsters
-          (if (bullets-touch-monster (bullets-list-of-bullets bullets) (car (monsters-list-of-monsters monsters)))
-              (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters)) (+ 1 (monsters-numdead monsters))) bullets)
-              (let ([nextmonsters (monster-health-deletion (make-monsters (cdr (monsters-list-of-monsters monsters)) (monsters-numdead monsters)) bullets)])
-                (make-monsters (cons (car (monsters-list-of-monsters monsters))
-                                   (monsters-list-of-monsters nextmonsters)) (monsters-numdead nextmonsters)))))) )
+; Take in a world, deletes monsters from the world which are touching a bullet and delete bullets which are touching monsters.
+; Return a new world which removes the colliding objects.
+(define (monster-health-deletion world)
+  ; If no monsters in world, return world.
+  (if (null? (monsters-list-of-monsters (world-monsters world)))
+      world
+      ; If no bullets in world, return world.
+      (if (null? (bullets-list-of-bullets (world-bullets world)))
+          world
+          ; Figure out which bullets are NOT touching the first monster, set that to aliveBullets.
+          (let ([aliveBullets (bullets-touch-monster (bullets-list-of-bullets (world-bullets world)) (car (monsters-list-of-monsters (world-monsters world))))])
+            ; Number removed is just old list of bullets - new list of bullets.
+            (let ([numRemoved (- (length (bullets-list-of-bullets (world-bullets world))) (length aliveBullets))])
+              (if (> numRemoved 0)
+                  ; If some were removed, play sound then return new world with that monster removed AND the bullets touching that monster removed, and
+                  ; recursively call whole thing again on remaining monsters and remaining bullets.
+                  (and (pstream-play backgroundmusic collisionSound) (monster-health-deletion
+                                              (make-world (world-player world)
+                                                          (make-monsters (cdr (monsters-list-of-monsters (world-monsters world))) (+ 1 (monsters-numdead (world-monsters world))))
+                                                          (make-bullets aliveBullets))
+                   ))
+                  ; If none were removed, return same world same function recursively called on remaining monsters and same bullets.
+                  (let ([nextworld (monster-health-deletion (make-world (world-player world)
+                                                          (make-monsters (cdr (monsters-list-of-monsters (world-monsters world))) (monsters-numdead (world-monsters world)))
+                                                          (make-bullets aliveBullets)))])
+                    (make-world (world-player world)
+                                (make-monsters (cons (car (monsters-list-of-monsters (world-monsters world))) (monsters-list-of-monsters (world-monsters nextworld))) (monsters-numdead (world-monsters nextworld)))
+                                (world-bullets nextworld)))
+                  ))))))
       
 
-
+; Determine if any of the bullets given are touching the monster given.
+; Return which bullets are not touching monster.
 (define (bullets-touch-monster bullets monster)
   (if (null? bullets)
-      #f
+      '()
       (if (and (< (abs (- (bullet-x-coordinate (car bullets)) (monster-x-coordinate monster))) (/ (image-width monster-image) 1))
                (< (abs (- (bullet-y-coordinate (car bullets)) (monster-y-coordinate monster))) (/ (image-height monster-image) 1)))
-          #t
           (bullets-touch-monster (cdr bullets) monster)
+          (cons (car bullets) (bullets-touch-monster (cdr bullets) monster))
   ))
   )
 
@@ -287,53 +315,6 @@
     )
     )
 
-;; @created by : T
-;; @name : isAlive?
-;; @variable : bullet
-;;  ~bullet type object
-;; @returns : predicate
-;; @brief : takes a bullet returns predicate
-(define (isAlive? bullet)
-  (if (eq? (bullet-status bullet) 'alive)
-      #t #f)
-  )
-
-
-
-;; @created by : T
-;; @name : bullet-removal 
-;; @variable : bullets
-;;  ~bullet type object
-;; @returns : bullet type object
-;; @brief : takes a list of bullets and returns list of alive bullets
-(define (bullet-removal bullets)
-  (filter isAlive? bullets)
-  )
-
-
-
-;; @created by : T
-;; @name : move-monster
-;; @variable : world
-;;  ~world type object
-;; @returns : monster type object
-;; @brief : takes a world and returns an monster type object with updated coordinates
-;(define (move-monster world)
-;  (cond
-;    [(eq? (monster-status (world-monster world)) 'alive)
-;     (cond
-;       [(<= (monster-coordinate-y world) 0)
-;        (make-monster (monster-coordinate-x world) (+ (monster-coordinate-y world) 10) 'alive)
-;        ]
-;       [(>= (monster-coordinate-y world) 300)
-;        (make-monster (monster-coordinate-x world) (- (monster-coordinate-y world) 10) 'alive)]
-;       [else (make-monster (monster-coordinate-x world) (monster-coordinate-y world) 'alive)]
-;       )]
-;    [else (make-monster (monster-coordinate-x world) (monster-coordinate-y world) 'alive)]
-;    )
-;  )
-
-
 (define (change world a-key)
   (cond
     [(key=? a-key "left")  (make-world
@@ -374,7 +355,7 @@
                             (make-bullets (bullets-list-of-bullets (world-bullets world)))
                             )
                              ]
-    [(key=? a-key " ")  (if (or (<= (player-health (world-player world)) 0) (null? (monsters-list-of-monsters (world-monsters world))))
+    [(key=? a-key " ")  (pstream-queue backgroundmusic firingSound (pstream-current-frame backgroundmusic)) (if (or (<= (player-health (world-player world)) 0) (null? (monsters-list-of-monsters (world-monsters world))))
                                  (make-world (make-player 20 500 3 'alive 'right 0 0)
                         (make-monsters (list (make-monster 800 200 'alive 'up)
                                              (make-monster 700 100 'alive 'down)
@@ -397,13 +378,12 @@
                              (player-speed-y world))
                             (make-monsters (monsters-list-of-monsters (world-monsters world)) (monsters-numdead (world-monsters world)))
                             (make-bullets (cons
-                                           (make-bullet (player-coordinate-x world) (player-coordinate-y world) 'alive
+                                           (make-bullet (+ (player-coordinate-x world) 20) (player-coordinate-y world) 'alive
                                                         (player-direction (world-player world)))
                                            (bullets-list-of-bullets (world-bullets world))))
                             ))
-     
-
-     ]
+                        
+    ]
    
     [(= (string-length a-key) 1) world] 
     [else world]))
@@ -413,13 +393,13 @@
             (make-world (make-player 20 500 3 'alive 'right 0 0)
                         (make-monsters (list (make-monster 800 200 'alive 'up)
                                              (make-monster 700 100 'alive 'down)
-                                             (make-monster 600 450'alive 'right)
-                                             (make-monster 500 400 'alive 'left)
-                                             (make-monster 400 450 'alive 'left)
+                                             (make-monster 600 500'alive 'right)
+                                             (make-monster 500 500 'alive 'left)
+                                             (make-monster 400 500 'alive 'left)
                                              (make-monster 300 150 'alive 'up)
                                              (make-monster 200 300 'alive 'down)
                                              (make-monster 100 100 'alive 'up)
-                                             (make-monster 900 450 'alive 'right)) 0)
+                                             (make-monster 900 500 'alive 'right)) 0)
                         (make-bullets '())) ;;initial world
             (to-draw the-one-for-all)
             (on-key change)
