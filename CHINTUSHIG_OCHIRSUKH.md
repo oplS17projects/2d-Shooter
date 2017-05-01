@@ -53,7 +53,7 @@ Every core function in this code passes around world object and use accessors an
 
 (define-struct boss [x-coordinate y-coordinate health status]) ;; this line of code did not make it to the real game
  ```
- I have created the structure of the game which the world is a global object world which has player and monsters 
+ The world is a global object world which has player and monsters 
  , bullets,  lvl and boss which are individual objects that has their own attributes inside of them. 
  By doing this we are creating 2 layers of abstraction and some level of efficiency by passing around only the world object and 
  using accessors to access certain attributes of the object.
