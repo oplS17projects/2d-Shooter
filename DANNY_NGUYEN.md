@@ -9,7 +9,7 @@ This is a one player game where user input is taken from the keyboard, players c
 using the 'right' and 'left' arrows. This is a PVE type game where players are given 3 lives and once that reaches 0 it is game over, and in order
 to win the player must kill all the enemies.
 
-**Authorship note:** All of the code described here was mostly written by myself. Excerpts of code which were worked on collaboraively will be specified.
+**Authorship note:** All of the code described here was written by myself. Excerpts of code which were worked on collaboraively will be specified.
 # Libraries Used
 The code uses three libraries:
 
