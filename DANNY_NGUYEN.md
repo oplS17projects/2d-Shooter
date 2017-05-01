@@ -109,7 +109,7 @@ then we would return the same world and ```recursively``` call the function on r
 ```
 
 ## 3. Object-Orientation
-The majority of our game relies on mostly three objects the player, monsters, and bullets. Here is a small excerpt of code 
+The majority of our game relies on mostly three objects the player, monsters, bullets, and updating the world. Here is a small excerpt of code 
 I wrote to keep track of the players health. We check to see if absolute value of the player's x and y coordinate minus the
 monster's x y coordinate is less than the image height and width of the monster and if so then we know that they are "touching"
 so we subtract 1 from the player's health. Here we also use the monsters object to manipulate the player objects 'health'.
